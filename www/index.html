@@ -1,0 +1,218 @@
+<!doctype html> 
+<html>
+<head> 
+	<meta charset="UTF-8" />
+	<title>Game of Tiles</title>
+	<script type="text/javascript" src="js/phaser.min.js"></script>
+    <style type="text/css">
+        body {
+            margin: 80;
+        }
+    </style>
+</head>
+
+
+<body>
+
+<script type="text/javascript">
+
+
+
+
+
+
+var game = new Phaser.Game(600, 600, Phaser.CANVAS, '', { preload: preload, create: create, update: update});
+
+function preload() {
+
+    game.load.tilemap('matching', 'assets/phaser_tiles.json', null, Phaser.Tilemap.TILED_JSON);
+    game.load.image('tiles', 'assets/phaser_tiles.png');//, 100, 100, -1, 1, 1);    
+}
+
+var timeCheck = 0;
+var flipFlag = false;
+
+var startList = new Array();
+var squareList = new Array();
+
+var masterCounter = 0;
+var squareCounter = 0;
+var square1Num;
+var square2Num;
+var savedSquareX1;
+var savedSquareY1;
+var savedSquareX2;
+var savedSquareY2;
+
+var map;
+var tileset;
+var layer;
+
+var marker;
+var currentTile;
+var currentTilePosition;
+
+var tileBack = 25;
+
+
+var myCountdownSeconds;
+
+
+function create() {
+
+        game.input.addPointer();
+
+        map = game.add.tilemap('matching');
+
+        map.addTilesetImage('Desert', 'tiles');
+
+        layer = map.createLayer('Ground');
+
+        marker = game.add.graphics();
+        marker.lineStyle(2, 0x00FF00, 1);
+        marker.drawRect(0, 0, 100, 100);
+    
+    randomizeTiles();
+
+}
+
+function update() {
+    
+    
+    
+    if (layer.getTileX(game.input.activePointer.worldX) <= 5) // to prevent the marker from going out of bounds
+    {
+        marker.x = layer.getTileX(game.input.activePointer.worldX) * 100;
+        marker.y = layer.getTileY(game.input.activePointer.worldY) * 100;
+    }
+
+    if (flipFlag == true) 
+    {
+        if (game.time.totalElapsedSeconds() - timeCheck > 0.5)
+        {
+            flipBack();
+        }
+    }
+    else
+    {
+        processClick();
+    }
+}
+   
+   
+
+
+function processClick() {
+   
+    currentTile = map.getTile(layer.getTileX(marker.x), layer.getTileY(marker.y));
+    currentTilePosition = ((layer.getTileY(game.input.activePointer.worldY)+1)*6)-(6-(layer.getTileX(game.input.activePointer.worldX)+1));
+        
+    if (game.input.mousePointer.isDown || game.input.pointer1.isDown)
+        {
+        // fijarse si la ficha ya no esta dada vuelta
+        if (currentTile.index == tileBack)
+        {
+            // sacar el item correspondiente de squareList
+                currentNum = squareList[currentTilePosition-1];
+            flipOver();
+                squareCounter++;
+            // la segunda ficha del par esta dada vuelta?
+            if  (squareCounter == 2) 
+            {
+                // reset squareCounter
+                squareCounter = 0;
+                square2Num = currentNum;
+                // fijarse si coinciden
+                if (square1Num == square2Num)
+                {
+                    masterCounter++;    
+                    
+                    if (masterCounter == 18) 
+                    {
+                        // ganar
+                        youWin = 'Got them all!';
+                    }                       
+                }
+                else
+                {
+                    savedSquareX2 = layer.getTileX(marker.x);
+                    savedSquareY2 = layer.getTileY(marker.y);
+                        flipFlag = true;
+                        timeCheck = game.time.totalElapsedSeconds();
+                }   
+            }   
+            else
+            {
+                savedSquareX1 = layer.getTileX(marker.x);
+                savedSquareY1 = layer.getTileY(marker.y);
+                    square1Num = currentNum;
+            }           
+        }           
+    }    
+}
+ 
+function flipOver() {
+ 
+    map.putTile(currentNum, layer.getTileX(marker.x), layer.getTileY(marker.y));
+}
+ 
+function flipBack() {
+        
+    flipFlag = false;
+    
+    map.putTile(tileBack, savedSquareX1, savedSquareY1);
+    map.putTile(tileBack, savedSquareX2, savedSquareY2);
+ 
+}
+ 
+function randomizeTiles() {
+
+    for (num = 1; num <= 18; num++)
+    {
+        startList.push(num);
+    }
+    for (num = 1; num <= 18; num++)
+    {
+        startList.push(num);
+    }
+
+
+  
+    // randomize squareList
+    for (i = 1; i <=36; i++)
+    {
+        var randomPosition = game.rnd.integerInRange(0,startList.length - 1);
+
+        var thisNumber = startList[ randomPosition ];
+
+        squareList.push(thisNumber);
+        var a = startList.indexOf(thisNumber);
+
+        startList.splice( a, 1);
+    }
+    
+
+  
+    for (col = 0; col < 6; col++)
+    {
+        for (row = 0; row < 6; row++)
+        {
+            map.putTile(tileBack, col, row);
+        }
+    }
+}
+
+function getHiddenTile() {
+        
+    thisTile = squareList[currentTilePosition-1];
+    return thisTile;
+}
+
+
+
+
+
+
+</script>
+</body>
+</html>
